@@ -1,8 +1,10 @@
-import { MOCK_STATE_LOGS } from '@/data/mock-data';
+import { useOrderStore } from '@/contexts/OrderStore';
 import { STATUS_LABELS } from '@/types/domain';
 import { Link } from 'react-router-dom';
 
 const AuditPage = () => {
+  const { stateLogs } = useOrderStore();
+
   return (
     <div>
       <h1 className="text-3xl font-display mb-1">Audit Log</h1>
@@ -20,7 +22,7 @@ const AuditPage = () => {
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
-            {MOCK_STATE_LOGS.map(log => (
+            {[...stateLogs].reverse().map(log => (
               <tr key={log.id} className="hover:bg-secondary/30 transition-colors">
                 <td className="p-4 text-sm text-muted-foreground font-mono">
                   {new Date(log.timestamp).toLocaleString()}

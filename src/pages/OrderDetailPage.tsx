@@ -1,12 +1,10 @@
 import { useParams, Link } from 'react-router-dom';
-import { MOCK_ORDERS, MOCK_STATE_LOGS, MOCK_LEDGER } from '@/data/mock-data';
+import { useOrderStore } from '@/contexts/OrderStore';
 import StatusBadge from '@/components/StatusBadge';
-import OrderPipeline from '@/components/OrderPipeline';
 import { STATE_TRANSITIONS, STATUS_LABELS, OrderStatus } from '@/types/domain';
 import { useAuth } from '@/contexts/AuthContext';
-import { ArrowLeft, User, Clock, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, User, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { toast } from 'sonner';
 
 const PIPELINE_STEPS: OrderStatus[] = [
   'ORDER_CREATED', 'PRODUCER_ASSIGNED', 'RAW_CONFIRMED', 'PROCESSOR_ASSIGNED',
@@ -17,9 +15,11 @@ const PIPELINE_STEPS: OrderStatus[] = [
 const OrderDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
-  const order = MOCK_ORDERS.find(o => o.id === id);
-  const logs = MOCK_STATE_LOGS.filter(l => l.order_id === id);
-  const ledger = MOCK_LEDGER.filter(l => l.order_id === id);
+  const { orders, stateLogs, ledger, transitionOrder } = useOrderStore();
+
+  const order = orders.find(o => o.id === id);
+  const logs = stateLogs.filter(l => l.order_id === id);
+  const orderLedger = ledger.filter(l => l.order_id === id);
 
   if (!order) {
     return (
@@ -32,23 +32,14 @@ const OrderDetailPage = () => {
 
   const transitions = STATE_TRANSITIONS[order.status];
   const availableTransitions = transitions.filter(t => t.allowed_role === user?.role);
-
-  const handleTransition = (nextStatus: OrderStatus) => {
-    toast.success(`State transition: ${STATUS_LABELS[order.status]} → ${STATUS_LABELS[nextStatus]}`, {
-      description: 'This is a demo. In production, this would update the database.',
-    });
-  };
-
   const currentStepIndex = PIPELINE_STEPS.indexOf(order.status);
 
   return (
     <div>
-      {/* Back */}
       <Link to="/orders" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-6">
         <ArrowLeft className="h-4 w-4" /> Back to orders
       </Link>
 
-      {/* Header */}
       <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-8">
         <div>
           <div className="flex items-center gap-3">
@@ -91,7 +82,7 @@ const OrderDetailPage = () => {
           </div>
           <div className="flex gap-2">
             {availableTransitions.map(t => (
-              <Button key={t.next} onClick={() => handleTransition(t.next)}>
+              <Button key={t.next} onClick={() => transitionOrder(order.id, t.next)}>
                 {STATUS_LABELS[t.next]}
               </Button>
             ))}
@@ -144,12 +135,12 @@ const OrderDetailPage = () => {
               ))}
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground">No audit logs available for this order in demo.</p>
+            <p className="text-sm text-muted-foreground">No audit logs yet.</p>
           )}
         </div>
 
         {/* Ledger */}
-        {ledger.length > 0 && (
+        {orderLedger.length > 0 && (
           <div className="bg-card rounded-lg border border-border p-6 shadow-card lg:col-span-2">
             <h2 className="text-lg font-display mb-4">Ledger Entries</h2>
             <table className="w-full">
@@ -164,7 +155,7 @@ const OrderDetailPage = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {ledger.map(entry => (
+                {orderLedger.map(entry => (
                   <tr key={entry.id}>
                     <td className="py-3 text-sm">{entry.actor_name}</td>
                     <td className="py-3 text-sm text-muted-foreground">{entry.role}</td>

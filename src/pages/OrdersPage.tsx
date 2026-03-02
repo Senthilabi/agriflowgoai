@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { MOCK_ORDERS } from '@/data/mock-data';
+import { useOrderStore } from '@/contexts/OrderStore';
 import StatusBadge from '@/components/StatusBadge';
 import OrderPipeline from '@/components/OrderPipeline';
 import { OrderStatus, STATUS_LABELS } from '@/types/domain';
@@ -13,10 +13,11 @@ const ALL_STATUSES: OrderStatus[] = [
 ];
 
 const OrdersPage = () => {
+  const { orders } = useOrderStore();
   const [statusFilter, setStatusFilter] = useState<OrderStatus | 'ALL'>('ALL');
   const [search, setSearch] = useState('');
 
-  const filtered = MOCK_ORDERS.filter(o => {
+  const filtered = orders.filter(o => {
     if (statusFilter !== 'ALL' && o.status !== statusFilter) return false;
     if (search && !o.id.toLowerCase().includes(search.toLowerCase()) && !o.product_name.toLowerCase().includes(search.toLowerCase()) && !o.retailer_name.toLowerCase().includes(search.toLowerCase())) return false;
     return true;
@@ -27,7 +28,7 @@ const OrdersPage = () => {
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-3xl font-display">Orders</h1>
-          <p className="text-muted-foreground mt-1">{MOCK_ORDERS.length} total orders in system</p>
+          <p className="text-muted-foreground mt-1">{orders.length} total orders in system</p>
         </div>
       </div>
 
