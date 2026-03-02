@@ -1,14 +1,16 @@
-import { MOCK_LEDGER } from '@/data/mock-data';
+import { useOrderStore } from '@/contexts/OrderStore';
 import { CreditCard } from 'lucide-react';
 import MetricCard from '@/components/MetricCard';
 import { Link } from 'react-router-dom';
 
 const LedgerPage = () => {
-  const totalGross = MOCK_LEDGER.reduce((s, e) => s + e.gross_amount, 0);
-  const totalCommission = MOCK_LEDGER.reduce((s, e) => s + e.commission_deducted, 0);
-  const totalNet = MOCK_LEDGER.reduce((s, e) => s + e.net_amount, 0);
-  const released = MOCK_LEDGER.filter(e => e.status === 'RELEASED');
-  const pending = MOCK_LEDGER.filter(e => e.status === 'PENDING');
+  const { ledger } = useOrderStore();
+
+  const totalGross = ledger.reduce((s, e) => s + e.gross_amount, 0);
+  const totalCommission = ledger.reduce((s, e) => s + e.commission_deducted, 0);
+  const totalNet = ledger.reduce((s, e) => s + e.net_amount, 0);
+  const released = ledger.filter(e => e.status === 'RELEASED');
+  const pending = ledger.filter(e => e.status === 'PENDING');
 
   return (
     <div>
@@ -35,7 +37,7 @@ const LedgerPage = () => {
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
-            {MOCK_LEDGER.map(entry => (
+            {ledger.map(entry => (
               <tr key={entry.id} className="hover:bg-secondary/30 transition-colors">
                 <td className="p-4">
                   <Link to={`/orders/${entry.order_id}`} className="font-mono text-sm text-primary hover:underline">{entry.order_id}</Link>
