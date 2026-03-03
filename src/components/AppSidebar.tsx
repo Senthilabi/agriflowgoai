@@ -1,14 +1,7 @@
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import {
-  LayoutDashboard,
-  ShoppingCart,
-  Users,
-  BookOpen,
-  LogOut,
-  Wheat,
-  Settings,
-  CreditCard,
+  LayoutDashboard, ShoppingCart, Users, BookOpen, LogOut, Wheat, Settings, CreditCard,
 } from 'lucide-react';
 import { UserRole } from '@/types/domain';
 
@@ -30,16 +23,15 @@ const NAV_ITEMS: NavItem[] = [
 ];
 
 const AppSidebar = () => {
-  const { user, logout } = useAuth();
+  const { profile, logout } = useAuth();
   const location = useLocation();
 
-  if (!user) return null;
+  if (!profile) return null;
 
-  const filteredNav = NAV_ITEMS.filter(item => item.roles.includes(user.role));
+  const filteredNav = NAV_ITEMS.filter(item => item.roles.includes(profile.role));
 
   return (
     <aside className="w-64 min-h-screen bg-sidebar text-sidebar-foreground flex flex-col border-r border-sidebar-border">
-      {/* Logo */}
       <div className="p-6 border-b border-sidebar-border">
         <Link to="/dashboard" className="flex items-center gap-2">
           <div className="h-8 w-8 rounded-md gradient-accent flex items-center justify-center">
@@ -49,7 +41,6 @@ const AppSidebar = () => {
         </Link>
       </div>
 
-      {/* Navigation */}
       <nav className="flex-1 p-4 space-y-1">
         {filteredNav.map(item => {
           const isActive = location.pathname === item.path;
@@ -70,23 +61,18 @@ const AppSidebar = () => {
         })}
       </nav>
 
-      {/* User */}
       <div className="p-4 border-t border-sidebar-border">
         <div className="flex items-center gap-3 mb-3">
           <div className="h-8 w-8 rounded-full bg-sidebar-accent flex items-center justify-center text-xs font-medium text-sidebar-accent-foreground">
-            {user.name.charAt(0)}
+            {profile.name.charAt(0)}
           </div>
           <div className="flex-1 min-w-0">
-            <div className="text-sm font-medium truncate text-sidebar-accent-foreground">{user.name}</div>
-            <div className="text-xs text-sidebar-foreground/50">{user.role}</div>
+            <div className="text-sm font-medium truncate text-sidebar-accent-foreground">{profile.name}</div>
+            <div className="text-xs text-sidebar-foreground/50">{profile.role}</div>
           </div>
         </div>
-        <button
-          onClick={logout}
-          className="flex items-center gap-2 text-sm text-sidebar-foreground/50 hover:text-sidebar-foreground transition-colors w-full"
-        >
-          <LogOut className="h-4 w-4" />
-          Sign out
+        <button onClick={logout} className="flex items-center gap-2 text-sm text-sidebar-foreground/50 hover:text-sidebar-foreground transition-colors w-full">
+          <LogOut className="h-4 w-4" /> Sign out
         </button>
       </div>
     </aside>

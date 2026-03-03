@@ -14,7 +14,7 @@ const PIPELINE_STEPS: OrderStatus[] = [
 
 const OrderDetailPage = () => {
   const { id } = useParams<{ id: string }>();
-  const { user } = useAuth();
+  const { profile } = useAuth();
   const { orders, stateLogs, ledger, transitionOrder } = useOrderStore();
 
   const order = orders.find(o => o.id === id);
@@ -31,8 +31,11 @@ const OrderDetailPage = () => {
   }
 
   const transitions = STATE_TRANSITIONS[order.status];
-  const availableTransitions = transitions.filter(t => t.allowed_role === user?.role);
+  const availableTransitions = transitions.filter(t => t.allowed_role === profile?.role);
   const currentStepIndex = PIPELINE_STEPS.indexOf(order.status);
+  const commissionPercent = order.commission_bps / 100;
+  const valuePaise = order.total_value_paise;
+  const commissionPaise = Math.round(valuePaise * order.commission_bps / 10000);
 
   return (
     <div>
@@ -43,14 +46,14 @@ const OrderDetailPage = () => {
       <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-8">
         <div>
           <div className="flex items-center gap-3">
-            <h1 className="text-3xl font-display">{order.id}</h1>
+            <h1 className="text-3xl font-display">{order.id.slice(0, 8)}</h1>
             <StatusBadge status={order.status} />
           </div>
-          <p className="text-muted-foreground mt-1">{order.product_name} · {order.quantity} {order.product_name.includes('Oil') ? 'L' : 'kg'}</p>
+          <p className="text-muted-foreground mt-1">{order.product_name} · {order.quantity} {order.product_name?.includes('Oil') ? 'L' : 'kg'}</p>
         </div>
         <div className="text-right">
-          <div className="text-2xl font-display">₹{order.total_value.toLocaleString()}</div>
-          <div className="text-sm text-muted-foreground">{order.commission_percent}% commission (₹{(order.total_value * order.commission_percent / 100).toLocaleString()})</div>
+          <div className="text-2xl font-display">₹{(valuePaise / 100).toLocaleString()}</div>
+          <div className="text-sm text-muted-foreground">{commissionPercent}% commission (₹{(commissionPaise / 100).toLocaleString()})</div>
         </div>
       </div>
 
@@ -78,7 +81,7 @@ const OrderDetailPage = () => {
         <div className="bg-accent/10 border border-accent/30 rounded-lg p-4 mb-6 flex items-center justify-between">
           <div>
             <p className="text-sm font-medium">Action Required</p>
-            <p className="text-xs text-muted-foreground">You can advance this order to the next stage</p>
+            <p className="text-xs text-muted-foreground">You can advance this order</p>
           </div>
           <div className="flex gap-2">
             {availableTransitions.map(t => (
@@ -102,9 +105,7 @@ const OrderDetailPage = () => {
               { label: 'Logistics', name: order.assigned_logistics_name },
             ].map(actor => (
               <div key={actor.label} className="flex items-center gap-3">
-                <div className="h-8 w-8 rounded-full bg-secondary flex items-center justify-center">
-                  <User className="h-4 w-4 text-muted-foreground" />
-                </div>
+                <div className="h-8 w-8 rounded-full bg-secondary flex items-center justify-center"><User className="h-4 w-4 text-muted-foreground" /></div>
                 <div>
                   <div className="text-xs text-muted-foreground">{actor.label}</div>
                   <div className="text-sm font-medium">{actor.name || '—'}</div>
@@ -126,10 +127,8 @@ const OrderDetailPage = () => {
                     <div className="w-px flex-1 bg-border mt-1" />
                   </div>
                   <div className="pb-3">
-                    <div className="text-sm font-medium">{STATUS_LABELS[log.new_state]}</div>
-                    <div className="text-xs text-muted-foreground">
-                      {log.changed_by_name} · {new Date(log.timestamp).toLocaleDateString()}
-                    </div>
+                    <div className="text-sm font-medium">{STATUS_LABELS[log.new_state as OrderStatus]}</div>
+                    <div className="text-xs text-muted-foreground">{log.changed_by_name} · {new Date(log.timestamp).toLocaleDateString()}</div>
                   </div>
                 </div>
               ))}
@@ -159,17 +158,15 @@ const OrderDetailPage = () => {
                   <tr key={entry.id}>
                     <td className="py-3 text-sm">{entry.actor_name}</td>
                     <td className="py-3 text-sm text-muted-foreground">{entry.role}</td>
-                    <td className="py-3 text-sm text-right">₹{entry.gross_amount.toLocaleString()}</td>
-                    <td className="py-3 text-sm text-right text-destructive">-₹{entry.commission_deducted.toLocaleString()}</td>
-                    <td className="py-3 text-sm text-right font-medium">₹{entry.net_amount.toLocaleString()}</td>
+                    <td className="py-3 text-sm text-right">₹{(entry.gross_paise / 100).toLocaleString()}</td>
+                    <td className="py-3 text-sm text-right text-destructive">-₹{(entry.commission_paise / 100).toLocaleString()}</td>
+                    <td className="py-3 text-sm text-right font-medium">₹{(entry.net_paise / 100).toLocaleString()}</td>
                     <td className="py-3 text-right">
                       <span className={`text-xs px-2 py-0.5 rounded-full ${
                         entry.status === 'RELEASED' ? 'bg-success/10 text-success' :
                         entry.status === 'ELIGIBLE' ? 'bg-warning/10 text-warning' :
                         'bg-muted text-muted-foreground'
-                      }`}>
-                        {entry.status}
-                      </span>
+                      }`}>{entry.status}</span>
                     </td>
                   </tr>
                 ))}
