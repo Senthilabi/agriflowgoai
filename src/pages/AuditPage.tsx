@@ -1,5 +1,5 @@
 import { useOrderStore } from '@/contexts/OrderStore';
-import { STATUS_LABELS } from '@/types/domain';
+import { STATUS_LABELS, OrderStatus } from '@/types/domain';
 import { Link } from 'react-router-dom';
 
 const AuditPage = () => {
@@ -24,16 +24,14 @@ const AuditPage = () => {
           <tbody className="divide-y divide-border">
             {[...stateLogs].reverse().map(log => (
               <tr key={log.id} className="hover:bg-secondary/30 transition-colors">
-                <td className="p-4 text-sm text-muted-foreground font-mono">
-                  {new Date(log.timestamp).toLocaleString()}
-                </td>
+                <td className="p-4 text-sm text-muted-foreground font-mono">{new Date(log.timestamp).toLocaleString()}</td>
                 <td className="p-4">
-                  <Link to={`/orders/${log.order_id}`} className="font-mono text-sm text-primary hover:underline">{log.order_id}</Link>
+                  <Link to={`/orders/${log.order_id}`} className="font-mono text-sm text-primary hover:underline">{log.order_id.slice(0, 8)}</Link>
                 </td>
                 <td className="p-4 text-sm text-muted-foreground">
-                  {log.previous_state ? STATUS_LABELS[log.previous_state] : '—'}
+                  {log.previous_state ? STATUS_LABELS[log.previous_state as OrderStatus] : '—'}
                 </td>
-                <td className="p-4 text-sm font-medium">{STATUS_LABELS[log.new_state]}</td>
+                <td className="p-4 text-sm font-medium">{STATUS_LABELS[log.new_state as OrderStatus]}</td>
                 <td className="p-4 text-sm">{log.changed_by_name}</td>
               </tr>
             ))}

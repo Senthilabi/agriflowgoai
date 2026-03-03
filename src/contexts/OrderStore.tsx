@@ -1,82 +1,121 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
-import { Order, OrderStateLog, LedgerEntry, OrderStatus, STATE_TRANSITIONS, STATUS_LABELS } from '@/types/domain';
-import { MOCK_ORDERS, MOCK_STATE_LOGS, MOCK_LEDGER } from '@/data/mock-data';
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { OrderStatus, STATUS_LABELS } from '@/types/domain';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 
+export interface DbOrder {
+  id: string;
+  product_id: string | null;
+  product_name: string | null;
+  quantity: number;
+  retailer_id: string;
+  retailer_name: string | null;
+  assigned_producer_id: string | null;
+  assigned_producer_name: string | null;
+  assigned_processor_id: string | null;
+  assigned_processor_name: string | null;
+  assigned_logistics_id: string | null;
+  assigned_logistics_name: string | null;
+  total_value_paise: number;
+  commission_bps: number;
+  status: OrderStatus;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DbStateLog {
+  id: string;
+  order_id: string;
+  previous_state: string | null;
+  new_state: string;
+  changed_by_user_id: string | null;
+  changed_by_name: string | null;
+  timestamp: string;
+}
+
+export interface DbLedgerEntry {
+  id: string;
+  order_id: string;
+  actor_id: string;
+  actor_name: string | null;
+  role: string;
+  gross_paise: number;
+  commission_paise: number;
+  net_paise: number;
+  status: string;
+  created_at: string;
+}
+
 interface OrderStoreContextType {
-  orders: Order[];
-  stateLogs: OrderStateLog[];
-  ledger: LedgerEntry[];
-  transitionOrder: (orderId: string, nextStatus: OrderStatus) => boolean;
+  orders: DbOrder[];
+  stateLogs: DbStateLog[];
+  ledger: DbLedgerEntry[];
+  loading: boolean;
+  transitionOrder: (orderId: string, nextStatus: OrderStatus) => Promise<boolean>;
+  refreshOrders: () => Promise<void>;
 }
 
 const OrderStoreContext = createContext<OrderStoreContextType | undefined>(undefined);
 
 export const OrderStoreProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [orders, setOrders] = useState<Order[]>(() => JSON.parse(JSON.stringify(MOCK_ORDERS)));
-  const [stateLogs, setStateLogs] = useState<OrderStateLog[]>(() => JSON.parse(JSON.stringify(MOCK_STATE_LOGS)));
-  const [ledger, setLedger] = useState<LedgerEntry[]>(() => JSON.parse(JSON.stringify(MOCK_LEDGER)));
-  const { user } = useAuth();
+  const [orders, setOrders] = useState<DbOrder[]>([]);
+  const [stateLogs, setStateLogs] = useState<DbStateLog[]>([]);
+  const [ledger, setLedger] = useState<DbLedgerEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { isAuthenticated } = useAuth();
 
-  const transitionOrder = useCallback((orderId: string, nextStatus: OrderStatus): boolean => {
-    if (!user) return false;
+  const refreshOrders = useCallback(async () => {
+    const [ordersRes, logsRes, ledgerRes] = await Promise.all([
+      supabase.from('orders').select('*').order('created_at', { ascending: false }),
+      supabase.from('order_state_logs').select('*').order('timestamp', { ascending: true }),
+      supabase.from('ledger_entries').select('*').order('created_at', { ascending: true }),
+    ]);
+    if (ordersRes.data) setOrders(ordersRes.data as DbOrder[]);
+    if (logsRes.data) setStateLogs(logsRes.data as DbStateLog[]);
+    if (ledgerRes.data) setLedger(ledgerRes.data as DbLedgerEntry[]);
+    setLoading(false);
+  }, []);
 
-    const order = orders.find(o => o.id === orderId);
-    if (!order) return false;
+  useEffect(() => {
+    if (isAuthenticated) {
+      refreshOrders();
+    } else {
+      setOrders([]);
+      setStateLogs([]);
+      setLedger([]);
+      setLoading(false);
+    }
+  }, [isAuthenticated, refreshOrders]);
 
-    const allowed = STATE_TRANSITIONS[order.status];
-    const transition = allowed.find(t => t.next === nextStatus && t.allowed_role === user.role);
-    if (!transition) {
-      toast.error('Transition not allowed', {
-        description: `Your role (${user.role}) cannot move from ${STATUS_LABELS[order.status]} to ${STATUS_LABELS[nextStatus]}.`,
-      });
+  const transitionOrder = useCallback(async (orderId: string, nextStatus: OrderStatus): Promise<boolean> => {
+    const { data, error } = await supabase.rpc('transition_order', {
+      p_order_id: orderId,
+      p_next_status: nextStatus,
+    });
+
+    if (error) {
+      toast.error('Transition failed', { description: error.message });
       return false;
     }
 
-    const previousState = order.status;
-    const now = new Date().toISOString();
+    const result = data as { success: boolean; error?: string; previous_status?: string; new_status?: string };
 
-    // Update order
-    setOrders(prev => prev.map(o =>
-      o.id === orderId ? { ...o, status: nextStatus, updated_at: now.split('T')[0] } : o
-    ));
-
-    // Add audit log
-    const newLog: OrderStateLog = {
-      id: `sl-${Date.now()}`,
-      order_id: orderId,
-      previous_state: previousState,
-      new_state: nextStatus,
-      changed_by_user_id: user.id,
-      changed_by_name: user.name,
-      timestamp: now,
-    };
-    setStateLogs(prev => [...prev, newLog]);
-
-    // Update ledger on DELIVERED → mark PENDING entries as ELIGIBLE
-    if (nextStatus === 'DELIVERED') {
-      setLedger(prev => prev.map(e =>
-        e.order_id === orderId && e.status === 'PENDING' ? { ...e, status: 'ELIGIBLE' } : e
-      ));
+    if (!result.success) {
+      toast.error('Transition not allowed', { description: result.error });
+      return false;
     }
 
-    // Update ledger on SETTLED → mark ELIGIBLE entries as RELEASED
-    if (nextStatus === 'SETTLED') {
-      setLedger(prev => prev.map(e =>
-        e.order_id === orderId && e.status === 'ELIGIBLE' ? { ...e, status: 'RELEASED' } : e
-      ));
-    }
-
-    toast.success(`${STATUS_LABELS[previousState]} → ${STATUS_LABELS[nextStatus]}`, {
-      description: `Order ${orderId} advanced successfully.`,
+    toast.success(`${STATUS_LABELS[result.previous_status as OrderStatus]} → ${STATUS_LABELS[result.new_status as OrderStatus]}`, {
+      description: `Order advanced successfully.`,
     });
 
+    await refreshOrders();
     return true;
-  }, [orders, user]);
+  }, [refreshOrders]);
 
   return (
-    <OrderStoreContext.Provider value={{ orders, stateLogs, ledger, transitionOrder }}>
+    <OrderStoreContext.Provider value={{ orders, stateLogs, ledger, loading, transitionOrder, refreshOrders }}>
       {children}
     </OrderStoreContext.Provider>
   );

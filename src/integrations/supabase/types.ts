@@ -14,13 +14,285 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      ledger_entries: {
+        Row: {
+          actor_id: string
+          actor_name: string | null
+          commission_paise: number
+          created_at: string | null
+          gross_paise: number
+          id: string
+          net_paise: number
+          order_id: string
+          role: string
+          status: string
+        }
+        Insert: {
+          actor_id: string
+          actor_name?: string | null
+          commission_paise: number
+          created_at?: string | null
+          gross_paise: number
+          id?: string
+          net_paise: number
+          order_id: string
+          role: string
+          status?: string
+        }
+        Update: {
+          actor_id?: string
+          actor_name?: string | null
+          commission_paise?: number
+          created_at?: string | null
+          gross_paise?: number
+          id?: string
+          net_paise?: number
+          order_id?: string
+          role?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ledger_entries_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ledger_entries_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      order_state_logs: {
+        Row: {
+          changed_by_name: string | null
+          changed_by_user_id: string | null
+          client_action_id: string | null
+          id: string
+          new_state: string
+          order_id: string
+          payload: Json | null
+          previous_state: string | null
+          timestamp: string | null
+        }
+        Insert: {
+          changed_by_name?: string | null
+          changed_by_user_id?: string | null
+          client_action_id?: string | null
+          id?: string
+          new_state: string
+          order_id: string
+          payload?: Json | null
+          previous_state?: string | null
+          timestamp?: string | null
+        }
+        Update: {
+          changed_by_name?: string | null
+          changed_by_user_id?: string | null
+          client_action_id?: string | null
+          id?: string
+          new_state?: string
+          order_id?: string
+          payload?: Json | null
+          previous_state?: string | null
+          timestamp?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_state_logs_changed_by_user_id_fkey"
+            columns: ["changed_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_state_logs_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orders: {
+        Row: {
+          assigned_logistics_id: string | null
+          assigned_logistics_name: string | null
+          assigned_processor_id: string | null
+          assigned_processor_name: string | null
+          assigned_producer_id: string | null
+          assigned_producer_name: string | null
+          commission_bps: number
+          created_at: string | null
+          id: string
+          product_id: string | null
+          product_name: string | null
+          quantity: number
+          retailer_id: string
+          retailer_name: string | null
+          status: string
+          total_value_paise: number
+          updated_at: string | null
+        }
+        Insert: {
+          assigned_logistics_id?: string | null
+          assigned_logistics_name?: string | null
+          assigned_processor_id?: string | null
+          assigned_processor_name?: string | null
+          assigned_producer_id?: string | null
+          assigned_producer_name?: string | null
+          commission_bps?: number
+          created_at?: string | null
+          id?: string
+          product_id?: string | null
+          product_name?: string | null
+          quantity: number
+          retailer_id: string
+          retailer_name?: string | null
+          status?: string
+          total_value_paise?: number
+          updated_at?: string | null
+        }
+        Update: {
+          assigned_logistics_id?: string | null
+          assigned_logistics_name?: string | null
+          assigned_processor_id?: string | null
+          assigned_processor_name?: string | null
+          assigned_producer_id?: string | null
+          assigned_producer_name?: string | null
+          commission_bps?: number
+          created_at?: string | null
+          id?: string
+          product_id?: string | null
+          product_name?: string | null
+          quantity?: number
+          retailer_id?: string
+          retailer_name?: string | null
+          status?: string
+          total_value_paise?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_assigned_logistics_id_fkey"
+            columns: ["assigned_logistics_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_assigned_processor_id_fkey"
+            columns: ["assigned_processor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_assigned_producer_id_fkey"
+            columns: ["assigned_producer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_retailer_id_fkey"
+            columns: ["retailer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      products: {
+        Row: {
+          active: boolean | null
+          category: string
+          created_at: string | null
+          description: string | null
+          id: string
+          unit: string
+          variety: string
+        }
+        Insert: {
+          active?: boolean | null
+          category: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          unit: string
+          variety: string
+        }
+        Update: {
+          active?: boolean | null
+          category?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          unit?: string
+          variety?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string | null
+          email: string | null
+          id: string
+          kyc_status: boolean | null
+          name: string
+          phone: string | null
+          role: string
+          subscription_status: boolean | null
+        }
+        Insert: {
+          created_at?: string | null
+          email?: string | null
+          id: string
+          kyc_status?: boolean | null
+          name: string
+          phone?: string | null
+          role: string
+          subscription_status?: boolean | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          kyc_status?: boolean | null
+          name?: string
+          phone?: string | null
+          role?: string
+          subscription_status?: boolean | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_my_role: { Args: never; Returns: string }
+      is_admin: { Args: never; Returns: boolean }
+      transition_order: {
+        Args: {
+          p_client_action_id?: string
+          p_next_status: string
+          p_order_id: string
+        }
+        Returns: Json
+      }
     }
     Enums: {
       [_ in never]: never
