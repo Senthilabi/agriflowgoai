@@ -17,68 +17,9 @@ export type OrderStatus =
 
 export type LedgerStatus = 'PENDING' | 'ELIGIBLE' | 'RELEASED';
 
-export interface User {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  role: UserRole;
-  kyc_status: boolean;
-  subscription_status: boolean;
-  created_at: string;
-}
+// Legacy float-based types removed — use DbOrder, DbStateLog, DbLedgerEntry from OrderStore
 
-export interface Product {
-  id: string;
-  category: 'Rice' | 'Oil';
-  variety: string;
-  description: string;
-  unit: 'kg' | 'litre';
-  active: boolean;
-}
-
-export interface Order {
-  id: string;
-  product_id: string;
-  product_name: string;
-  quantity: number;
-  retailer_id: string;
-  retailer_name: string;
-  assigned_producer_id?: string;
-  assigned_producer_name?: string;
-  assigned_processor_id?: string;
-  assigned_processor_name?: string;
-  assigned_logistics_id?: string;
-  assigned_logistics_name?: string;
-  total_value: number;
-  commission_percent: number;
-  status: OrderStatus;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface OrderStateLog {
-  id: string;
-  order_id: string;
-  previous_state: OrderStatus | null;
-  new_state: OrderStatus;
-  changed_by_user_id: string;
-  changed_by_name: string;
-  timestamp: string;
-}
-
-export interface LedgerEntry {
-  id: string;
-  order_id: string;
-  actor_id: string;
-  actor_name: string;
-  role: UserRole;
-  gross_amount: number;
-  commission_deducted: number;
-  net_amount: number;
-  status: LedgerStatus;
-  created_at: string;
-}
+// OrderStateLog and LedgerEntry types live in OrderStore.tsx as DbStateLog / DbLedgerEntry
 
 // State machine transition rules
 export const STATE_TRANSITIONS: Record<OrderStatus, { next: OrderStatus; allowed_role: UserRole }[]> = {

@@ -13,6 +13,8 @@ import OrderDetailPage from "@/pages/OrderDetailPage";
 import LedgerPage from "@/pages/LedgerPage";
 import ActorsPage from "@/pages/ActorsPage";
 import AuditPage from "@/pages/AuditPage";
+import ProductsPage from "@/pages/ProductsPage";
+import SettingsPage from "@/pages/SettingsPage";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -49,8 +51,8 @@ const App = () => (
                 <Route path="/ledger" element={<LedgerPage />} />
                 <Route path="/actors" element={<ActorsPage />} />
                 <Route path="/audit" element={<AuditPage />} />
-                <Route path="/products" element={<div className="animate-fade-in"><h1 className="text-3xl font-display">Products</h1><p className="text-muted-foreground mt-1">Coming soon</p></div>} />
-                <Route path="/settings" element={<div className="animate-fade-in"><h1 className="text-3xl font-display">Settings</h1><p className="text-muted-foreground mt-1">Coming soon</p></div>} />
+                <Route path="/products" element={<ProductsPage />} />
+                <Route path="/settings" element={<SettingsPage />} />
               </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>

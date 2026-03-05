@@ -5,6 +5,7 @@ import { STATE_TRANSITIONS, STATUS_LABELS, OrderStatus } from '@/types/domain';
 import { useAuth } from '@/contexts/AuthContext';
 import { ArrowLeft, User, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import AssignActorDialog from '@/components/AssignActorDialog';
 
 const PIPELINE_STEPS: OrderStatus[] = [
   'ORDER_CREATED', 'PRODUCER_ASSIGNED', 'RAW_CONFIRMED', 'PROCESSOR_ASSIGNED',
@@ -32,6 +33,7 @@ const OrderDetailPage = () => {
 
   const transitions = STATE_TRANSITIONS[order.status];
   const availableTransitions = transitions.filter(t => t.allowed_role === profile?.role);
+  const isAdmin = profile?.role === 'ADMIN';
   const currentStepIndex = PIPELINE_STEPS.indexOf(order.status);
   const commissionPercent = order.commission_bps / 100;
   const valuePaise = order.total_value_paise;
@@ -94,22 +96,25 @@ const OrderDetailPage = () => {
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Actors */}
+      {/* Actors */}
         <div className="bg-card rounded-lg border border-border p-6 shadow-card">
           <h2 className="text-lg font-display mb-4">Supply Chain Actors</h2>
           <div className="space-y-4">
-            {[
-              { label: 'Retailer', name: order.retailer_name },
-              { label: 'Producer', name: order.assigned_producer_name },
-              { label: 'Processor', name: order.assigned_processor_name },
-              { label: 'Logistics', name: order.assigned_logistics_name },
-            ].map(actor => (
+            {([
+              { label: 'Retailer', name: order.retailer_name, assignRole: null },
+              { label: 'Producer', name: order.assigned_producer_name, assignRole: 'PRODUCER' as const },
+              { label: 'Processor', name: order.assigned_processor_name, assignRole: 'PROCESSOR' as const },
+              { label: 'Logistics', name: order.assigned_logistics_name, assignRole: 'LOGISTICS' as const },
+            ]).map(actor => (
               <div key={actor.label} className="flex items-center gap-3">
                 <div className="h-8 w-8 rounded-full bg-secondary flex items-center justify-center"><User className="h-4 w-4 text-muted-foreground" /></div>
-                <div>
+                <div className="flex-1">
                   <div className="text-xs text-muted-foreground">{actor.label}</div>
                   <div className="text-sm font-medium">{actor.name || '—'}</div>
                 </div>
+                {isAdmin && actor.assignRole && (
+                  <AssignActorDialog orderId={order.id} actorRole={actor.assignRole} currentActorName={actor.name} />
+                )}
               </div>
             ))}
           </div>

@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useOrderStore } from '@/contexts/OrderStore';
+import { useAuth } from '@/contexts/AuthContext';
 import StatusBadge from '@/components/StatusBadge';
 import OrderPipeline from '@/components/OrderPipeline';
+import CreateOrderDialog from '@/components/CreateOrderDialog';
 import { OrderStatus, STATUS_LABELS } from '@/types/domain';
 import { Search, Filter } from 'lucide-react';
 
@@ -14,8 +16,10 @@ const ALL_STATUSES: OrderStatus[] = [
 
 const OrdersPage = () => {
   const { orders } = useOrderStore();
+  const { profile } = useAuth();
   const [statusFilter, setStatusFilter] = useState<OrderStatus | 'ALL'>('ALL');
   const [search, setSearch] = useState('');
+  const isRetailer = profile?.role === 'RETAILER';
 
   const filtered = orders.filter(o => {
     if (statusFilter !== 'ALL' && o.status !== statusFilter) return false;
@@ -31,6 +35,7 @@ const OrdersPage = () => {
           <h1 className="text-3xl font-display">Orders</h1>
           <p className="text-muted-foreground mt-1">{orders.length} total orders</p>
         </div>
+        {isRetailer && <CreateOrderDialog />}
       </div>
 
       <div className="flex flex-col sm:flex-row gap-3 mb-6">
