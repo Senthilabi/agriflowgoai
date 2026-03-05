@@ -283,6 +283,30 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      assign_actor: {
+        Args: { p_actor_id: string; p_actor_role: string; p_order_id: string }
+        Returns: Json
+      }
+      create_order: {
+        Args: {
+          p_commission_bps?: number
+          p_product_id: string
+          p_quantity: number
+          p_total_value_paise: number
+        }
+        Returns: Json
+      }
+      get_actors_by_role: {
+        Args: { p_role: string }
+        Returns: {
+          email: string
+          id: string
+          kyc_status: boolean
+          name: string
+          phone: string
+          subscription_status: boolean
+        }[]
+      }
       get_my_role: { Args: never; Returns: string }
       is_admin: { Args: never; Returns: boolean }
       transition_order: {
