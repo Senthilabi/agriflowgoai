@@ -4,7 +4,7 @@ import { useOrderStore } from '@/contexts/OrderStore';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+
 import { Plus } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -78,14 +78,17 @@ const CreateOrderDialog = () => {
         <form onSubmit={handleSubmit} className="space-y-4 mt-2">
           <div>
             <label className="text-sm text-muted-foreground mb-1 block">Product</label>
-            <Select value={productId} onValueChange={setProductId}>
-              <SelectTrigger><SelectValue placeholder="Select product" /></SelectTrigger>
-              <SelectContent>
-                {products.map(p => (
-                  <SelectItem key={p.id} value={p.id}>{p.variety} ({p.category})</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <select
+              value={productId}
+              onChange={e => setProductId(e.target.value)}
+              required
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            >
+              <option value="">Select product</option>
+              {products.map(p => (
+                <option key={p.id} value={p.id}>{p.variety} ({p.category})</option>
+              ))}
+            </select>
           </div>
 
           <div className="grid grid-cols-2 gap-3">

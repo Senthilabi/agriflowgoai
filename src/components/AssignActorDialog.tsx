@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useOrderStore } from '@/contexts/OrderStore';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+
 import { UserPlus } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -69,14 +69,16 @@ const AssignActorDialog = ({ orderId, actorRole, currentActorName }: AssignActor
           <DialogTitle>Assign {ROLE_LABELS[actorRole]}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 mt-2">
-          <Select value={selectedActorId} onValueChange={setSelectedActorId}>
-            <SelectTrigger><SelectValue placeholder={`Select ${ROLE_LABELS[actorRole].toLowerCase()}`} /></SelectTrigger>
-            <SelectContent>
-              {actors.map(a => (
-                <SelectItem key={a.id} value={a.id}>{a.name}{a.email ? ` (${a.email})` : ''}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <select
+            value={selectedActorId}
+            onChange={e => setSelectedActorId(e.target.value)}
+            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          >
+            <option value="">{`Select ${ROLE_LABELS[actorRole].toLowerCase()}`}</option>
+            {actors.map(a => (
+              <option key={a.id} value={a.id}>{a.name}{a.email ? ` (${a.email})` : ''}</option>
+            ))}
+          </select>
           <Button className="w-full" onClick={handleAssign} disabled={submitting || !selectedActorId}>
             {submitting ? 'Assigning…' : 'Confirm Assignment'}
           </Button>
